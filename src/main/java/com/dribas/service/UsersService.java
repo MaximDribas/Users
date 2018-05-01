@@ -5,7 +5,7 @@ import com.dribas.dao.UsersStorage;
 import com.dribas.entity.User;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -14,8 +14,8 @@ public class UsersService {
 
     private static final int MIN_NAME_LENGTH = 3;
     private static final int MAX_NAME_LENGTH = 255;
-    private static final Pattern LOGIN_PATTERN = Pattern.compile("\\w");
-    private static final Pattern PASS_PATTERN = Pattern.compile("\\w");
+    private static final Pattern LOGIN_PATTERN = Pattern.compile("\\w{6,20}");
+    private static final Pattern PASS_PATTERN = Pattern.compile("\\w{6,20}");
 
     private UsersStorage storage;
 
@@ -23,7 +23,7 @@ public class UsersService {
         this.storage = storage;
     }
 
-    public Collection<User> getAll() {
+    public List<User> getAll() {
         return storage.getAll();
     }
 

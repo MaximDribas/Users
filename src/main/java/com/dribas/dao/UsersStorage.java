@@ -1,11 +1,12 @@
 package com.dribas.dao;
 
 import com.dribas.entity.User;
-import java.util.Collection;
+
+import java.util.List;
 
 public interface UsersStorage {
 
-    Collection<User> getAll();
+    List<User> getAll();
 
     User getById(int userId);
 

@@ -16,6 +16,7 @@ public class UsersRestController {
 
     public UsersRestController(UsersService service) {
         this.service = service;
+        service.save(new User("l","p","Ivan","Ivanov"));
     }
 
     @GetMapping("{id}")
@@ -23,21 +24,25 @@ public class UsersRestController {
         User user = service.getById(id);
         return new ResponseEntity<>(user, HttpStatus.OK);
     }
-    @GetMapping()
+
+    @GetMapping
     public ResponseEntity<List<User>> getAll() {
-        List<User> list = (List<User>) service.getAll();
+        List<User> list = service.getAll();
         return new ResponseEntity<>(list, HttpStatus.OK);
     }
-    @PostMapping()
+
+    @PostMapping
     public ResponseEntity<Void> post(@RequestBody User user) {
         service.save(user);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
-    @PutMapping()
+
+    @PutMapping
     public ResponseEntity<User> patch(@RequestBody User user) {
         service.update(user);
         return new ResponseEntity<>(user, HttpStatus.OK);
     }
+
     @DeleteMapping("{id}")
     public ResponseEntity<Void> delete(@PathVariable("id") int id) {
         service.delete(id);
