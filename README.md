@@ -1,4 +1,4 @@
-# ТЗ от JuJa
+# Техническое задание
 
 Необходимо спроектировать и реализовать rest сервис хранения информации о
 пользователях.
@@ -17,4 +17,16 @@ password
 firstName
 lastName
 
-Код необходимо загрузить на github и прислать ссылку.
+Пример пользователя в формате json:
+    {
+   "userId": 1,
+
+        "login": "login6char",
+
+        "password": "password6char",
+
+        "firstName": "First",
+
+        "lastName": "Last"
+
+    }

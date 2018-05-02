@@ -1,88 +1,130 @@
 package com.dribas.service;
 
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-
-import javax.servlet.ServletContext;
-
-import org.junit.Assert;
-import org.junit.Before;
+import com.dribas.Application;
+import com.dribas.entity.User;
+import org.json.JSONException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mock.web.MockServletContext;
-import org.springframework.test.context.ContextConfiguration;
+import org.skyscreamer.jsonassert.JSONAssert;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.web.WebAppConfiguration;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
+
+import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = { ApplicationConfig.class })
-@WebAppConfiguration
+@SpringBootTest(classes = Application.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ControllerIntegrationTest {
 
-    @Autowired
-    private WebApplicationContext wac;
+    @LocalServerPort
+    private int port;
 
-    private MockMvc mockMvc;
+    TestRestTemplate restTemplate = new TestRestTemplate();
 
-    private static final String CONTENT_TYPE = "application/json;charset=UTF-8";
+    HttpHeaders headers = new HttpHeaders();
 
-    @Before
-    public void setup() throws Exception {
-        this.mockMvc = MockMvcBuilders.webAppContextSetup(this.wac).build();
+    @Test
+    public void testRetrieveEmptyUsersArray() throws JSONException {
+
+        HttpEntity<String> entity = new HttpEntity<>(null, headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                createURLWithPort("/users"),
+                HttpMethod.GET, entity, String.class);
+
+        String expected = "[]";
+
+        JSONAssert.assertEquals(expected, response.getBody(), false);
     }
 
     @Test
-    public void givenWAC_whenServletContext_thenItProvidesGreetController() {
-        final ServletContext servletContext = wac.getServletContext();
-        Assert.assertNotNull(servletContext);
-        Assert.assertTrue(servletContext instanceof MockServletContext);
-        Assert.assertNotNull(wac.getBean("greetController"));
+    public void addUserAndGetAllUsers() throws JSONException {
+        //add user
+        User user = new User("login6char", "password6char", "First", "Last");
+
+        HttpEntity<User> entity = new HttpEntity<>(user, headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                createURLWithPort("/users"),
+                HttpMethod.POST, entity, String.class);
+
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+
+        //retrieve all users
+        HttpEntity<String> all = new HttpEntity<>(null, headers);
+
+        ResponseEntity<String> allResponse = restTemplate.exchange(
+                createURLWithPort("/users"),
+                HttpMethod.GET, all, String.class);
+
+        String expected = "[{\"userId\":1,\"login\":\"login6char\",\"password\":\"password6char\",\"firstName\":\"First\",\"lastName\":\"Last\"}]";
+
+        JSONAssert.assertEquals(expected, allResponse.getBody(), true);
     }
 
     @Test
-    public void givenHomePageURI_whenMockMVC_thenReturnsIndexJSPViewName() throws Exception {
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/homePage")).andDo(print()).andExpect(MockMvcResultMatchers.view().name("index"));
+    public void addUserAndGetUserById() throws JSONException {
+        //add user
+        User user = new User("login6char", "password6char", "First", "Last");
+
+        HttpEntity<User> entity = new HttpEntity<>(user, headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                createURLWithPort("/users"),
+                HttpMethod.POST, entity, String.class);
+
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+
+        //retrieve user by id
+        HttpEntity<String> all = new HttpEntity<>(null, headers);
+
+        ResponseEntity<String> allResponse = restTemplate.exchange(
+                createURLWithPort("/users/1"),
+                HttpMethod.GET, all, String.class);
+
+        String expected = "{\"userId\":1,\"login\":\"login6char\",\"password\":\"password6char\",\"firstName\":\"First\",\"lastName\":\"Last\"}";
+
+        JSONAssert.assertEquals(expected, allResponse.getBody(), true);
     }
 
     @Test
-    public void givenGreetURI_whenMockMVC_thenVerifyResponse() throws Exception {
-        final MvcResult mvcResult = this.mockMvc.perform(MockMvcRequestBuilders.get("/greet")).andDo(print()).andExpect(MockMvcResultMatchers.status().isOk()).andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Hello World!!!")).andReturn();
-        Assert.assertEquals(CONTENT_TYPE, mvcResult.getResponse().getContentType());
+    public void addUserAndDeleteUserById() throws JSONException {
+        //add user
+        User user = new User("login6char", "password6char", "First", "Last");
+
+        HttpEntity<User> entity = new HttpEntity<>(user, headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                createURLWithPort("/users"),
+                HttpMethod.POST, entity, String.class);
+
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+
+        //delete user by id
+        HttpEntity<String> all = new HttpEntity<>(null, headers);
+
+        ResponseEntity<String> allResponse = restTemplate.exchange(
+                createURLWithPort("/users/1"),
+                HttpMethod.DELETE, all, String.class);
+        //get all users
+        HttpEntity<String> entity2 = new HttpEntity<>(null, headers);
+
+        ResponseEntity<String> response2 = restTemplate.exchange(
+                createURLWithPort("/users"),
+                HttpMethod.GET, entity2, String.class);
+
+        String expected = "[]";
+
+        JSONAssert.assertEquals(expected, response2.getBody(), false);
     }
 
-    @Test
-    public void givenGreetURIWithPathVariable_whenMockMVC_thenVerifyResponse() throws Exception {
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/greetWithPathVariable/John")).andDo(print()).andExpect(MockMvcResultMatchers.status().isOk()).andExpect(MockMvcResultMatchers.content().contentType(CONTENT_TYPE))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Hello World John!!!"));
-    }
-
-    @Test
-    public void givenGreetURIWithPathVariable_2_whenMockMVC_thenVerifyResponse() throws Exception {
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/greetWithPathVariable/{name}", "Doe")).andDo(print()).andExpect(MockMvcResultMatchers.status().isOk()).andExpect(MockMvcResultMatchers.content().contentType(CONTENT_TYPE))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Hello World Doe!!!"));
-    }
-
-    @Test
-    public void givenGreetURIWithQueryParameter_whenMockMVC_thenVerifyResponse() throws Exception {
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/greetWithQueryVariable").param("name", "John Doe")).andDo(print()).andExpect(MockMvcResultMatchers.status().isOk()).andExpect(MockMvcResultMatchers.content().contentType(CONTENT_TYPE))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Hello World John Doe!!!"));
-    }
-
-    @Test
-    public void givenGreetURIWithPost_whenMockMVC_thenVerifyResponse() throws Exception {
-        this.mockMvc.perform(MockMvcRequestBuilders.post("/greetWithPost")).andDo(print()).andExpect(MockMvcResultMatchers.status().isOk()).andExpect(MockMvcResultMatchers.content().contentType(CONTENT_TYPE))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Hello World!!!"));
-    }
-
-    @Test
-    public void givenGreetURIWithPostAndFormData_whenMockMVC_thenVerifyResponse() throws Exception {
-        this.mockMvc.perform(MockMvcRequestBuilders.post("/greetWithPostAndFormData").param("id", "1").param("name", "John Doe")).andDo(print()).andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.content().contentType(CONTENT_TYPE)).andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Hello World John Doe!!!")).andExpect(MockMvcResultMatchers.jsonPath("$.id").value(1));
+    private String createURLWithPort(String uri) {
+        return "http://localhost:" + port + uri;
     }
 }
