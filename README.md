@@ -20,7 +20,6 @@ lastName
 Пример пользователя в формате json:
 
 	{
-
 	"userId": 1,
 	"login": "login6char",
 	"password": "password6char",
