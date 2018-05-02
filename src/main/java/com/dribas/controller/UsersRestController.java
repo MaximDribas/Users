@@ -16,7 +16,6 @@ public class UsersRestController {
 
     public UsersRestController(UsersService service) {
         this.service = service;
-        service.save(new User("login6char","password6char","First","Last"));
     }
 
     @GetMapping("{id}")

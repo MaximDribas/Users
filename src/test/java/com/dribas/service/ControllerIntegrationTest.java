@@ -9,11 +9,7 @@ import org.skyscreamer.jsonassert.JSONAssert;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import static org.junit.Assert.assertEquals;
@@ -25,9 +21,9 @@ public class ControllerIntegrationTest {
     @LocalServerPort
     private int port;
 
-    TestRestTemplate restTemplate = new TestRestTemplate();
+    private TestRestTemplate restTemplate = new TestRestTemplate();
 
-    HttpHeaders headers = new HttpHeaders();
+    private HttpHeaders headers = new HttpHeaders();
 
     @Test
     public void testRetrieveEmptyUsersArray() throws JSONException {
@@ -40,11 +36,11 @@ public class ControllerIntegrationTest {
 
         String expected = "[]";
 
-        JSONAssert.assertEquals(expected, response.getBody(), false);
+        JSONAssert.assertEquals(expected, response.getBody(), true);
     }
 
     @Test
-    public void addUserAndGetAllUsers() throws JSONException {
+    public void addUserAndDeleteUserById() throws JSONException {
         //add user
         User user = new User("login6char", "password6char", "First", "Last");
 
@@ -66,52 +62,25 @@ public class ControllerIntegrationTest {
         String expected = "[{\"userId\":1,\"login\":\"login6char\",\"password\":\"password6char\",\"firstName\":\"First\",\"lastName\":\"Last\"}]";
 
         JSONAssert.assertEquals(expected, allResponse.getBody(), true);
-    }
-
-    @Test
-    public void addUserAndGetUserById() throws JSONException {
-        //add user
-        User user = new User("login6char", "password6char", "First", "Last");
-
-        HttpEntity<User> entity = new HttpEntity<>(user, headers);
-
-        ResponseEntity<String> response = restTemplate.exchange(
-                createURLWithPort("/users"),
-                HttpMethod.POST, entity, String.class);
-
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
 
         //retrieve user by id
-        HttpEntity<String> all = new HttpEntity<>(null, headers);
+        HttpEntity<String> byId = new HttpEntity<>(null, headers);
 
-        ResponseEntity<String> allResponse = restTemplate.exchange(
+        ResponseEntity<String> byIdResponse = restTemplate.exchange(
                 createURLWithPort("/users/1"),
-                HttpMethod.GET, all, String.class);
+                HttpMethod.GET, byId, String.class);
 
-        String expected = "{\"userId\":1,\"login\":\"login6char\",\"password\":\"password6char\",\"firstName\":\"First\",\"lastName\":\"Last\"}";
+        String expectedById = "{\"userId\":1,\"login\":\"login6char\",\"password\":\"password6char\",\"firstName\":\"First\",\"lastName\":\"Last\"}";
 
-        JSONAssert.assertEquals(expected, allResponse.getBody(), true);
-    }
-
-    @Test
-    public void addUserAndDeleteUserById() throws JSONException {
-        //add user
-        User user = new User("login6char", "password6char", "First", "Last");
-
-        HttpEntity<User> entity = new HttpEntity<>(user, headers);
-
-        ResponseEntity<String> response = restTemplate.exchange(
-                createURLWithPort("/users"),
-                HttpMethod.POST, entity, String.class);
-
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        JSONAssert.assertEquals(expectedById, byIdResponse.getBody(), true);
 
         //delete user by id
-        HttpEntity<String> all = new HttpEntity<>(null, headers);
+        HttpEntity<String> del = new HttpEntity<>(null, headers);
 
-        ResponseEntity<String> allResponse = restTemplate.exchange(
+        restTemplate.exchange(
                 createURLWithPort("/users/1"),
-                HttpMethod.DELETE, all, String.class);
+                HttpMethod.DELETE, del, String.class);
+
         //get all users
         HttpEntity<String> entity2 = new HttpEntity<>(null, headers);
 
@@ -119,9 +88,9 @@ public class ControllerIntegrationTest {
                 createURLWithPort("/users"),
                 HttpMethod.GET, entity2, String.class);
 
-        String expected = "[]";
+        String emptyExpected = "[]";
 
-        JSONAssert.assertEquals(expected, response2.getBody(), false);
+        JSONAssert.assertEquals(emptyExpected, response2.getBody(), true);
     }
 
     private String createURLWithPort(String uri) {
